@@ -15,8 +15,7 @@ module Rankmatic
 
     def submissions
       @submissions ||= begin
-        ids = @rows.map {|r| r[@group_by] }.uniq
-        ids.map do |id|
+        @rows.map {|r| r[@group_by] }.uniq.map do |id|
           scores = @rows.select {|r| r[@group_by] == id}
                         .map {|r| r[@rank_by].to_i }
 
