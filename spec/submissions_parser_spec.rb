@@ -19,9 +19,8 @@ eos
   let(:csv_path) { example_csv.path }
 
   let(:subject) do
-    Rankmatic::SubmissionsParser.new(
-      group_by:'email',
-      csv_path: csv_path)
+    args = { group_by:'email', csv_path: csv_path }
+    Rankmatic::SubmissionsParser.new(args)
   end
 
   after(:each) do

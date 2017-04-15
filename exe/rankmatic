@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+require 'pry'
+require "rankmatic"
+require "thor"
+
+class Rcli < Thor
+  desc "rank", "rank scores in CSV"
+  long_desc <<-LONGDESC
+    `rank --group_by=<ID COLUMN> --rank_by=<COLUMN YOU WANT TO RANK> --csv_path=./example.csv`
+    will take the average of all 'rank_by' values from rows matching with the 'group_by' value and use the result to
+    show a list of 'group_by' values in decending order by that rank
+
+    `rank --group_by=<ID COLUMN> --csv_path=./example.csv` will do the same except
+    each row will have all it's columns summed and used in place of the 'rank_by'
+    column
+  LONGDESC
+  option :group_by, required: true, aliases: [:g]
+  option :csv_path, required: true, aliases: [:c]
+  option :rank_by, aliases: [:r]
+  def rank
+    args = {
+      group_by: options['group_by'],
+      rank_by: options['rank_by'],
+      csv_path: options['csv_path']
+    }
+
+    puts Rankmatic::SubmissionsParser.new(args).rank
+  end
+end
+
+Rcli.start(ARGV)
