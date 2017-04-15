@@ -1,14 +1,14 @@
 require 'spec_helper'
 
 RSpec.describe Rankmatic::SubmissionsParser do
-
   let(:example_csv) do
     example_content =
 <<-eos
-email,total
-foo@example.com,42
-bar@example.com,100
-foo@example.com,10
+email,friendly,smart,cool
+foo@example.com,42,50,2
+bar@example.com,50,200,150
+foo@example.com,10,3,4
+edgecase@example.com,51,0,0
 eos
     Tempfile.new('example_csv').tap do |csv|
       csv.write(example_content)
@@ -18,6 +18,12 @@ eos
 
   let(:csv_path) { example_csv.path }
 
+  let(:subject) do
+    Rankmatic::SubmissionsParser.new(
+      group_by:'email',
+      csv_path: csv_path)
+  end
+
   after(:each) do
     example_csv.unlink
   end
@@ -26,11 +32,6 @@ eos
     it 'requires the key to group by' do
       expect { Rankmatic::SubmissionsParser.new(rank_by:'',csv_path:'') }
         .to raise_error('missing keyword: group_by')
-    end
-
-    it 'requires the key to rank by' do
-      expect { Rankmatic::SubmissionsParser.new(group_by:'', csv_path:'') }
-        .to raise_error('missing keyword: rank_by')
     end
 
     it 'requires the path to a csv' do
@@ -57,41 +58,34 @@ eos
 
   describe '#submissions' do
     it 'returns a collection of submissions with unique keys' do
-      subject = Rankmatic::SubmissionsParser.new(group_by: 'email',
-                                      rank_by:'total',
-                                      csv_path: csv_path)
-
-
-      expect(subject.submissions.count).to eq(2)
+      expect(subject.submissions.count).to eq(3)
       expect(subject.submissions.all? {|s| s.is_a? Rankmatic::Submission })
         .to eq(true)
     end
-
-    it 'aggregates scores correctly' do
-      subject = Rankmatic::SubmissionsParser.new(group_by: 'email',
-                                      rank_by:'total',
-                                      csv_path: csv_path)
-
-      foo = subject.submissions.detect {|s| s.id == 'foo@example.com' }
-      expect(foo.scores).to include(42, 10)
-
-      bar = subject.submissions.detect {|s| s.id == 'bar@example.com' }
-      expect(bar.scores).to eq([100])
-    end
-
   end
 
   describe '#build_submission' do
     it 'builds a Submission correctly' do
-      subject = Rankmatic::SubmissionsParser.new(
-        group_by:'email',
-        rank_by:'total',
-        csv_path: csv_path)
-
       result = subject.build_submission('foo@example.com')
 
       expect(result.id).to eq('foo@example.com')
-      expect(result.scores).to include(42, 10)
+      expect(result.scores).to contain_exactly(17, 94)
+    end
+  end
+
+  describe '#rank' do
+    it 'ranks the submissions by the averages of the specified column' do
+      subject = Rankmatic::SubmissionsParser.new(
+        group_by:'email',
+        rank_by: 'friendly',
+        csv_path: csv_path)
+
+      expect(subject.rank.first).to eq('edgecase@example.com')
+    end
+
+    it 'ranks by suming all score columns when rank_by is omitted' do
+      expect(subject.rank)
+        .to eq(['bar@example.com', 'foo@example.com', 'edgecase@example.com'])
     end
   end
 end
