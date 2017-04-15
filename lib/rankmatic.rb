@@ -1,6 +1,6 @@
 require "rankmatic/version"
 require "rankmatic/submission"
+require "rankmatic/submissions_parser"
 
 module Rankmatic
-  # Your code goes here...
 end

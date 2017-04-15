@@ -1,16 +1,14 @@
 module Rankmatic
   class Submission
+    attr_reader :scores, :id
+
     def initialize(id:, scores: [])
       @id = id
       @scores = scores
     end
 
-    def id
-      @id
-    end
-
     def total
-      @scores.reduce(:+)
+      scores.reduce(:+)
     end
 
     def average
@@ -18,7 +16,7 @@ module Rankmatic
     end
 
     def score_count
-      @scores.length
+      scores.length
     end
   end
 end
