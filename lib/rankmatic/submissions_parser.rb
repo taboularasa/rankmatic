@@ -9,19 +9,16 @@ module Rankmatic
       CSV.foreach(csv_path, headers: true) { |r| @rows << r }
     end
 
-    def submission_count
-      @rows.length
+    def submissions
+      @submissions ||=
+        @rows.map { |r| r[@group_by] }.uniq
+             .map { |id| build_submission(id) }
     end
 
-    def submissions
-      @submissions ||= begin
-        @rows.map {|r| r[@group_by] }.uniq.map do |id|
-          scores = @rows.select {|r| r[@group_by] == id}
-                        .map {|r| r[@rank_by].to_i }
-
-          Submission.new(id: id, scores: scores)
-        end
-      end
+    def build_submission(id)
+      score = ->(r) { r[@rank_by].to_i }
+      scores = @rows.select { |r| r[@group_by] == id }.map(&score)
+      Submission.new(id: id, scores: scores)
     end
   end
 end
